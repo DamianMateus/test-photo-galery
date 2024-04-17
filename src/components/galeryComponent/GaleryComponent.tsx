@@ -5,15 +5,17 @@ import { hasCookie, getCookie } from 'cookies-next';
 import { initializeUsers } from '@/utils/useAuth';
 import defaultUsers from '../../utils/users.json';
 import DropZoneArea from './DropZoneArea';
-import { initializateGallery } from '@/utils/photosDefault';
+import { initializateGallery, Photo } from '@/utils/photosDefault';
 
 const GaleryComponent = () => {
   const router = useRouter();
   const isLoggedIn = hasCookie('isLoggedIn');
   const userNameSession = getCookie('userNameSession');
-  const [photos, setPhotos] = useState<{ original: string; thumbnail: string }[]>([]);
-  const [principalImage, setPrincipalImage] = useState<string | null>(null);
+  const [existingPhotos, setExistingPhotos] = useState<Photo[]>([]);
+  const [principalImage, setPrincipalImage] = useState<string | File | null>(null);
 
+
+  // Cargar las fotos existentes del localStorage al montar el componente
   useEffect(() => {
     initializeUsers(defaultUsers);
     if (!isLoggedIn) {
@@ -22,59 +24,79 @@ const GaleryComponent = () => {
     const savedPhotos = localStorage.getItem('gallery');
     if (savedPhotos) {
       const listPhotos = JSON.parse(savedPhotos);
-      setPhotos(Object.values(listPhotos.photos));
+      setExistingPhotos(Object.values(listPhotos.photos));
     } else {
       if (userNameSession) {
         initializateGallery(userNameSession.toString());
       }
       const savedPhotos = localStorage.getItem('gallery');
       const listPhotos = JSON.parse(savedPhotos ? savedPhotos : '');
-      setPhotos(Object.values(listPhotos.photos));
+      setExistingPhotos(Object.values(listPhotos.photos));
     }
   }, [isLoggedIn, router, userNameSession]);
 
-  console.log(photos, 'photos');
-
   const handleImageClick = (image: string) => {
-    setPrincipalImage(image); // Setear la imagen principal al hacer clic en la miniatura
+    setPrincipalImage(image);
   };
 
   const handleCloseImage = () => {
-    setPrincipalImage(null); // Cerrar la imagen principal al hacer clic en el botón de cierre
+    setPrincipalImage(null);
   };
 
   const handleOutsideClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
-      // Si el clic ocurre en el fondo oscuro fuera de la imagen
-      setPrincipalImage(null); // Cerrar la imagen principal
+      setPrincipalImage(null);
     }
   };
 
-  const handleDrop = (acceptedFiles: any) => {
-    // Aquí deberías procesar los archivos aceptados y guardar la información en el localStorage
-    // Asegúrate de asociar las fotos al usuario actual (userNameSession)
-    // Después de guardar las fotos, actualiza el estado para que se reflejen en la galería
-    console.log(acceptedFiles);
+  const handleUploadPhotos = (uploadedFiles: File[]) => {
+    const newPhotos = uploadedFiles.map((file) => ({
+      url: URL.createObjectURL(file),
+      thumbnail: URL.createObjectURL(file),
+      isURL: false,
+    }));
+
+    const savedPhotos = localStorage.getItem('gallery');
+    let listPhotos = savedPhotos ? JSON.parse(savedPhotos) : { photos: [] };
+
+    if (!Array.isArray(listPhotos.photos)) {
+      listPhotos = { photos: [] };
+    }
+
+    const updatedPhotos = [...listPhotos.photos, ...newPhotos];
+    localStorage.setItem('gallery', JSON.stringify({ photos: updatedPhotos }));
+    setExistingPhotos(updatedPhotos);
   };
+
 
   return (
     <div className="container mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Galería de Fotos</h1>
-      <div className="mb-8">
-        <div className="flex flex-wrap">
-          {photos &&
-            photos.map((photo, index) => (
-              <div key={index} className="w-1/4 p-2">
+      <h1 className="text-2xl font-bold mb-4 sm:mb-8">Galería de Fotos</h1>
+      <div className="mb-8 overflow-x-auto">
+        <div className="flex flex-nowrap">
+
+          {existingPhotos.map((photo, index) => (
+            <div key={index} className="p-2">
+              {photo.file ? ( 
                 <img
-                  src={photo.thumbnail}
-                  alt="photo thumbnail"
-                  className="cursor-pointer border border-gray-300 rounded-md"
-                  onClick={() => handleImageClick(photo.original)}
+                  src={URL.createObjectURL(photo.file)}
+                  alt="photo file"
+                  className="cursor-pointer border border-gray-300 rounded-md min-w-150 sm:min-w-100"
+                  onClick={() => handleImageClick(photo.file ? URL.createObjectURL(photo.file) : photo.url!)}
                 />
-              </div>
-            ))}
+              ) : (
+                <img
+                  src={photo.url}
+                  alt="photo thumbnail"
+                  className="cursor-pointer border border-gray-300 rounded-md min-w-150 sm:min-w-100"
+                    onClick={() => handleImageClick(photo.url ? photo.url : '')}
+                />
+              )}
+            </div>
+          ))}
+
         </div>
-        <DropZoneArea />
+        <DropZoneArea onUpload={handleUploadPhotos} />
       </div>
       {principalImage && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center" onClick={handleOutsideClick}>
@@ -85,7 +107,11 @@ const GaleryComponent = () => {
             >
               Cerrar
             </button>
-            <img src={principalImage} alt="principal image" className="max-w-full max-h-full" />
+            <img
+              src={typeof principalImage === 'string' ? principalImage : URL.createObjectURL(principalImage)}
+              alt="principal image"
+              className="max-w-full max-h-full"
+            />
           </div>
         </div>
       )}

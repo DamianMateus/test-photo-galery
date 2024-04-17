@@ -10,9 +10,7 @@ export const metadata: Metadata = {
 const page: NextPage = () => {
   return (
     <>
-      <main className="flex min-h-screen flex-col items-center justify-between p-24">
-        <GaleryComponent />
-      </main>
+      <GaleryComponent />
     </>
   )
 }
