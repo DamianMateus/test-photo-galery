@@ -13,14 +13,11 @@ const bcrypt = require('bcryptjs');
 
 //region initializeUsers
 export const initializeUsers = (users: UserInterface[]) => {
-  console.log('initializeUsers')
   const usersLoad = loadUsersFromLocalStorage()
 
   if (usersLoad) {
-    console.log('true usersLoad initializeUsers')
     return
   } else {
-    console.log('not usersLoad initializeUsers')
     const saltRounds = 10;
     const defaultUsers: UserInterface[] = users.map((user: any) => {
 
