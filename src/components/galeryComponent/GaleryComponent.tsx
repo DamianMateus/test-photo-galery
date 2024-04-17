@@ -56,10 +56,17 @@ const GaleryComponent = () => {
       thumbnail: URL.createObjectURL(file),
       isURL: false,
     }));
+
     const updatedPhotos = [...existingPhotos, ...newPhotos];
-    localStorage.setItem('gallery', JSON.stringify({ photos: updatedPhotos }));
+    const updatedGallery = {
+      username: userNameSession,
+      photos: updatedPhotos,
+    };
+
+    localStorage.setItem('gallery', JSON.stringify(updatedGallery));
     setExistingPhotos(updatedPhotos);
   };
+
 
   const handleDeletePhoto = (id: string) => {
     const updatedPhotos = existingPhotos.filter(photo => photo.id !== id);
