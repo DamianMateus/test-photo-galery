@@ -48,14 +48,21 @@ const GaleryComponent = () => {
   };
 
   const handleUploadPhotos = (uploadedFiles: File[]) => {
+    const lastId = existingPhotos.length > 0 ? parseInt(existingPhotos[existingPhotos.length - 1].id) + 1 : 1;
+
     const newPhotos = uploadedFiles.map((file, index) => ({
-      id: `${index + existingPhotos.length}`, // Generar un id único para cada nueva foto
+      id: `${lastId + index}`,
       url: URL.createObjectURL(file),
       thumbnail: URL.createObjectURL(file),
       isURL: false,
     }));
-
     const updatedPhotos = [...existingPhotos, ...newPhotos];
+    localStorage.setItem('gallery', JSON.stringify({ photos: updatedPhotos }));
+    setExistingPhotos(updatedPhotos);
+  };
+
+  const handleDeletePhoto = (id: string) => {
+    const updatedPhotos = existingPhotos.filter(photo => photo.id !== id);
     localStorage.setItem('gallery', JSON.stringify({ photos: updatedPhotos }));
     setExistingPhotos(updatedPhotos);
   };
@@ -66,7 +73,23 @@ const GaleryComponent = () => {
       <h1 className="text-2xl font-bold mb-4 sm:mb-8">Galería de Fotos</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {existingPhotos.map((photo, index) => (
-          <div key={index} className="p-2">
+          <div key={index} className="p-2 relative">
+            <button
+              className="absolute top-0 right-0 m-1 p-1 bg-red-500 text-white rounded-full"
+              style={{
+                width: '20px',
+                height: '20px',
+                padding: '0',
+                borderRadius: '50%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                fontSize: '14px',
+              }}
+              onClick={() => handleDeletePhoto(photo.id)}
+            >
+              X
+            </button>
             {photo.file ? (
               <img
                 src={URL.createObjectURL(photo.file)}
@@ -84,6 +107,7 @@ const GaleryComponent = () => {
             )}
           </div>
         ))}
+
       </div>
       <DropZoneArea onUpload={handleUploadPhotos} />
       {principalImage && (
