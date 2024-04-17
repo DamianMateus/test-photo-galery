@@ -4,6 +4,10 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 First, make sure you have Node.js version 20.11.1 installed on your system.
 
+```bash
+npm install
+```
+
 Then, you can run the development server:
 
 ```bash
