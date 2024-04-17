@@ -13,7 +13,6 @@ const LoginComponent = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const result = await handleLogin(username, password);
-    console.log(result, 'result')
     if (result == 'ok') {
       router.push('/galeria');
     } else {
