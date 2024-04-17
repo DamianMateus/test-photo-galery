@@ -1,5 +1,17 @@
 [
-  { "username": "admin", "password": "1234", "rol": "admin" , "createdAt": "2024-04-17T13:38:58.651Z" },
-  { "username": "user", "password": "1234","rol": "user", "createdAt": "2024-04-17T13:38:58.651Z" },
-  { "username": "damian", "password": "1234","rol": "admin", "createdAt": "2024-04-17T13:38:58.651Z" }
+    {
+        "username": "admin",
+        "password": "1234",
+        "rol": "admin"
+    },
+    {
+        "username": "user",
+        "password": "1234",
+        "rol": "user"
+    },
+    {
+        "username": "damian",
+        "password": "1234",
+        "rol": "admin"
+    }
 ]

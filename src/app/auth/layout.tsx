@@ -1,11 +1,28 @@
-import React, { ReactNode } from 'react';
+'use client'
+import React, { ReactNode, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { hasCookie } from 'cookies-next';
+import { initializeUsers } from '@/utils/useAuth';
+import defaultUsers  from '../../utils/users.json';
 
 interface AuthLayoutProps {
   children: ReactNode;
 }
 
 const AuthLayout = ({ children }: AuthLayoutProps) => {
+  const router = useRouter();
+  const isLoggedIn = hasCookie('isLoggedIn');
+
+  useEffect(() => {
+    initializeUsers(defaultUsers);
+    if (!isLoggedIn) {
+      router.push('/auth/login');
+    } else {
+      router.push('/galeria');
+    }
+  }, [isLoggedIn, router]);
+
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="max-w-lg w-full bg-white p-8 rounded-lg shadow-lg flex flex-col items-center">

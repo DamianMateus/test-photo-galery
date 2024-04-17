@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { handleLogin } from '@/utils/useAuth';
 
 const LoginComponent = () => {
   const [username, setUsername] = useState('');
@@ -9,8 +10,14 @@ const LoginComponent = () => {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const result = await handleLogin(username, password);
+    console.log(result, 'result')
+    if (result == 'ok') {
+      router.push('/galeria');
+    } else {
+    }
   };
 
   const handleCreateAccount = () => {

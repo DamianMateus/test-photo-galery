@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { handleRegister } from '@/utils/useAuth';
 
 const RegisterComponent = () => {
   const [username, setUsername] = useState('');
@@ -9,11 +10,20 @@ const RegisterComponent = () => {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const result = await handleRegister(username, password);
+    if (result === 'usuario creado') {
+      router.push('/galeria');
+    } else if (result === 'usuario existente') {
+      router.push('/auth/login');
+    } else {
+      alert('Ocurrió un error al registrar el usuario');
+      console.error('Ocurrió un error al registrar el usuario');
+    }
   };
 
-  const handleCreateAccount = () => {
+  const handleLoginAccount = () => {
     router.push('/auth/login');
   };
 
@@ -60,7 +70,7 @@ const RegisterComponent = () => {
           <button
             type="button"
             className="text-blue-500 hover:text-blue-700 font-semibold focus:outline-none"
-            onClick={handleCreateAccount}
+            onClick={handleLoginAccount}
           >
             Iniciar sesión
           </button>

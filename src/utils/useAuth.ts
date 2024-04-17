@@ -1,144 +1,109 @@
 //region imports
-import { useState, useEffect } from 'react';
-import defaultUsers from './users.json';
+import { setCookie, deleteCookie } from "cookies-next";
 
 //region constants
-export interface User {
+export interface UserInterface {
   username: string;
   password: string;
-  createdAt: Date;
+  createdAt?: Date;
   rol: string;
 }
-
-const usersData = defaultUsers;
 
 const bcrypt = require('bcryptjs');
 
 //region initializeUsers
-const initializeUsers = async (): Promise<User[]> => {
-  const saltRounds = 10;
+export const initializeUsers = (users: UserInterface[]) => {
+  console.log('initializeUsers')
+  const usersLoad = loadUsersFromLocalStorage()
 
-  const defaultUsers: User[] = await Promise.all(
-    usersData.map(async (user: any) => {
-      const hashedPassword = await bcrypt.hash(user.password, saltRounds);
+  if (usersLoad) {
+    console.log('true usersLoad initializeUsers')
+    return
+  } else {
+    console.log('not usersLoad initializeUsers')
+    const saltRounds = 10;
+    const defaultUsers: UserInterface[] = users.map((user: any) => {
+
+      const hashedPassword = bcrypt.hashSync(user.password, saltRounds);
       return {
         ...user,
         createdAt: new Date(user.createdAt),
         password: hashedPassword,
       };
-    })
-  );
+    });
 
-  return defaultUsers;
+    localStorage.setItem('users', JSON.stringify(defaultUsers));
+  }
 };
 
-//region useAuth
-const useAuth = async (): Promise<{
-  isLoggedIn: boolean;
-  handleLogin: (username: string, password: string) => void;
-  handleLogout: () => void;
-  handleRegister: (newUsername: string, newPassword: string) => Promise<void>;
-}> => {
-  //region States
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+//region loadUsersFromLocalStorage
 
-  //region Load functionality
-  const usersDefault = await initializeUsers();
+export const loadUsersFromLocalStorage = () => {
+  const storedUsers = localStorage.getItem('users');
+  return storedUsers
+};
 
-  useEffect(() => {
-    const userSessionString = localStorage.getItem('userSession');
-    if (userSessionString) {
-      const userSession = JSON.parse(userSessionString);
-      const isLoggedIn = userSession.isLoggedIn;
-      const loginTime = userSession.loginTime;
-      const sessionDuration = new Date().getTime() - loginTime;
+//region handleLogin
 
-      if (sessionDuration > 3600000) {
-        setIsLoggedIn(false);
-        localStorage.removeItem('userSession');
-        alert('Su sesión ha expirado. Inicie sesión nuevamente.');
-      } else {
-        setIsLoggedIn(isLoggedIn);
-      }
-    }
-  }, []);
+export const handleLogin = async (username: string, password: string) => {
+  const users = localStorage.getItem('users');
+  const usersArray = JSON.parse(users ? users : '');
 
-  const loadUsersFromLocalStorage = (): void => {
-    const storedUsers = localStorage.getItem('users');
-    if (storedUsers) {
-      setUsers(JSON.parse(storedUsers) as User[]);
+
+  const user = usersArray.find((user: UserInterface) => user.username === username);
+  if (user) {
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (isPasswordMatch) {
+      localStorage.setItem('userSession', JSON.stringify({
+        username,
+        isLoggedIn: true,
+        loginTime: new Date().getTime(),
+      }));
+      setCookie("isLoggedIn", 'true')
+      setCookie("userNameSession", username);
+      alert('login satisfactorio');
+      return 'ok'
     } else {
-      setUsers(usersDefault);
-      saveUsersToLocalStorage();
+      alert('Credenciales incorrectas');
+      return 'incorrect'
     }
-  };
+  } else {
+    alert('Usuario no encontrado');
+    return 'incorrect'
+  }
+};
 
-  useEffect(() => {
-    loadUsersFromLocalStorage();
-  }, []);
+//region handleLogout
 
-  //region Handlers
-  const handleLogin = async (username: string, password: string): Promise<void> => {
-    const user = users.find((user) => user.username === username);
-    if (user) {
-      const isPasswordMatch = await bcrypt.compare(password, user.password);
-      if (isPasswordMatch) {
-        setIsLoggedIn(true);
-        localStorage.setItem('userSession', JSON.stringify({
-          username,
-          isLoggedIn: true,
-          loginTime: new Date().getTime(),
-        }));
-      } else {
-        alert('Credenciales incorrectas');
-      }
-    } else {
-      alert('Usuario no encontrado');
-    }
-  };
+export const handleLogout = () => {
+  deleteCookie('isLoggedIn');
+  deleteCookie('userNameSession');
+  localStorage.removeItem('userSession');
+};
 
-  const handleLogout = (): void => {
-    setIsLoggedIn(false);
-    localStorage.removeItem('userSession');
-  };
+//region handleRegister
 
-  const handleRegister = async (newUsername: string, newPassword: string): Promise<void> => {
-    const existingUser = users.find((user) => user.username === newUsername);
-    if (existingUser) {
-      alert('El nombre de usuario ya existe');
-      return;
-    }
+export const handleRegister = async (newUsername: string, newPassword: string) => {
+  const users = localStorage.getItem('users');
+  const usersArray = JSON.parse(users ? users : '');
 
+  const existingUser = usersArray.find((user: UserInterface) => user.username === newUsername);
+  if (existingUser) {
+    alert('El nombre de usuario ya existe');
+    return 'usuario existente';
+  } else {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
-    const newUser: User = {
+    const newUser: UserInterface = {
       username: newUsername,
       password: hashedPassword,
       rol: 'user',
       createdAt: new Date(),
     };
 
-    setUsers([...users, newUser]);
-    saveUsersToLocalStorage();
-    setIsLoggedIn(true);
-    return Promise.resolve();
-  };
-
-  //region Functions
-  const saveUsersToLocalStorage = (): void => {
-    localStorage.setItem('users', JSON.stringify(users));
-  };
-
-
-
-  return Promise.resolve({
-    isLoggedIn,
-    handleLogin,
-    handleLogout,
-    handleRegister,
-  });
+    usersArray.push(newUser);
+    localStorage.setItem('users', JSON.stringify(usersArray));
+    return 'usuario creado'
+  }
 };
-
-export default useAuth;
