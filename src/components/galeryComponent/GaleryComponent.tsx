@@ -12,7 +12,7 @@ const GaleryComponent = () => {
   const isLoggedIn = hasCookie('isLoggedIn');
   const userNameSession = getCookie('userNameSession');
   const [photos, setPhotos] = useState<{ original: string; thumbnail: string }[]>([]);
-  const [principalImage, setPrincipalImage] = useState<string | null>(null); // State para la imagen principal
+  const [principalImage, setPrincipalImage] = useState<string | null>(null);
 
   useEffect(() => {
     initializeUsers(defaultUsers);
