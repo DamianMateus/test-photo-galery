@@ -14,8 +14,6 @@ const GaleryComponent = () => {
   const [existingPhotos, setExistingPhotos] = useState<Photo[]>([]);
   const [principalImage, setPrincipalImage] = useState<string | File | null>(null);
 
-
-  // Cargar las fotos existentes del localStorage al montar el componente
   useEffect(() => {
     initializeUsers(defaultUsers);
     if (!isLoggedIn) {
@@ -24,14 +22,14 @@ const GaleryComponent = () => {
     const savedPhotos = localStorage.getItem('gallery');
     if (savedPhotos) {
       const listPhotos = JSON.parse(savedPhotos);
-      setExistingPhotos(Object.values(listPhotos.photos));
+      setExistingPhotos(listPhotos.photos);
     } else {
       if (userNameSession) {
         initializateGallery(userNameSession.toString());
       }
       const savedPhotos = localStorage.getItem('gallery');
-      const listPhotos = JSON.parse(savedPhotos ? savedPhotos : '');
-      setExistingPhotos(Object.values(listPhotos.photos));
+      const listPhotos = JSON.parse(savedPhotos || '{"photos":[]}');
+      setExistingPhotos(listPhotos.photos);
     }
   }, [isLoggedIn, router, userNameSession]);
 
@@ -50,20 +48,14 @@ const GaleryComponent = () => {
   };
 
   const handleUploadPhotos = (uploadedFiles: File[]) => {
-    const newPhotos = uploadedFiles.map((file) => ({
+    const newPhotos = uploadedFiles.map((file, index) => ({
+      id: `${index + existingPhotos.length}`, // Generar un id único para cada nueva foto
       url: URL.createObjectURL(file),
       thumbnail: URL.createObjectURL(file),
       isURL: false,
     }));
 
-    const savedPhotos = localStorage.getItem('gallery');
-    let listPhotos = savedPhotos ? JSON.parse(savedPhotos) : { photos: [] };
-
-    if (!Array.isArray(listPhotos.photos)) {
-      listPhotos = { photos: [] };
-    }
-
-    const updatedPhotos = [...listPhotos.photos, ...newPhotos];
+    const updatedPhotos = [...existingPhotos, ...newPhotos];
     localStorage.setItem('gallery', JSON.stringify({ photos: updatedPhotos }));
     setExistingPhotos(updatedPhotos);
   };
@@ -72,32 +64,28 @@ const GaleryComponent = () => {
   return (
     <div className="container mx-auto">
       <h1 className="text-2xl font-bold mb-4 sm:mb-8">Galería de Fotos</h1>
-      <div className="mb-8 overflow-x-auto">
-        <div className="flex flex-nowrap">
-
-          {existingPhotos.map((photo, index) => (
-            <div key={index} className="p-2">
-              {photo.file ? ( 
-                <img
-                  src={URL.createObjectURL(photo.file)}
-                  alt="photo file"
-                  className="cursor-pointer border border-gray-300 rounded-md min-w-150 sm:min-w-100"
-                  onClick={() => handleImageClick(photo.file ? URL.createObjectURL(photo.file) : photo.url!)}
-                />
-              ) : (
-                <img
-                  src={photo.url}
-                  alt="photo thumbnail"
-                  className="cursor-pointer border border-gray-300 rounded-md min-w-150 sm:min-w-100"
-                    onClick={() => handleImageClick(photo.url ? photo.url : '')}
-                />
-              )}
-            </div>
-          ))}
-
-        </div>
-        <DropZoneArea onUpload={handleUploadPhotos} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {existingPhotos.map((photo, index) => (
+          <div key={index} className="p-2">
+            {photo.file ? (
+              <img
+                src={URL.createObjectURL(photo.file)}
+                alt="photo file"
+                style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain' }}
+                onClick={() => handleImageClick(photo.file ? URL.createObjectURL(photo.file) : photo.url!)}
+              />
+            ) : (
+              <img
+                src={photo.url}
+                alt="photo thumbnail"
+                style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain' }}
+                onClick={() => handleImageClick(photo.url ? photo.url : '')}
+              />
+            )}
+          </div>
+        ))}
       </div>
+      <DropZoneArea onUpload={handleUploadPhotos} />
       {principalImage && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center" onClick={handleOutsideClick}>
           <div className="relative">

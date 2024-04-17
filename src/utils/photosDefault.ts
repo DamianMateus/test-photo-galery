@@ -35,12 +35,17 @@ interface Gallery {
 }
 
 export const initializateGallery = (userName: string) => {
+  const savedPhotos = localStorage.getItem('gallery');
   const gallery: Gallery = { username: userName, photos: [] };
 
-  getPhotosPublicList.forEach((photo, index) => {
-    gallery.photos.push({ id: photo.id, url: photo.url, thumbnail: photo.thumbnail, isURL: photo.isURL});
-  });
+  if (savedPhotos) {
+    const listPhotos = JSON.parse(savedPhotos);
+    gallery.photos = Object.values(listPhotos.photos);
+  } else {
+    getPhotosPublicList.forEach((photo, index) => {
+      gallery.photos.push({ id: photo.id, url: photo.url, thumbnail: photo.thumbnail, isURL: photo.isURL });
+    });
+  }
 
   localStorage.setItem('gallery', JSON.stringify(gallery));
 }
-
